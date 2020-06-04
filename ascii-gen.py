@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from statistics import mean
 import argparse
 
@@ -12,8 +12,9 @@ if not args.foreach:
     width = int(original.size[0] / 6)
     height = int(original.size[1] / 12)
 else: width, height = original.size[0], original.size[1]
-
-new = open(args.file + '-ascii.txt', 'x')
+new = Image.new('L', (width * 6, height * 12), color=255)
+draw = ImageDraw.Draw(new)
+font = ImageFont.truetype('consola.ttf', 11)
 out_text = ''
 
 chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
@@ -34,5 +35,5 @@ else:
             out_text += chars[round(original.getpixel((x, y)) * converter)]
         out_text += '\n'
 
-new.write(out_text)
-new.close()
+draw.text((0, 0), out_text, font=font, fill=0, spacing=3)
+new.save(args.file + '-ascii.png')
