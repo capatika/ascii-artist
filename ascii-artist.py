@@ -3,7 +3,7 @@ from statistics import mean
 import argparse
 
 parser = argparse.ArgumentParser(description="Converts an image to ASCII characters.")
-parser.add_argument('--foreach', dest='foreach', action='store_true', default=False, help="converts *each* pixel to an ASCII character")
+parser.add_argument('--foreach', dest='foreach', action='store_true', default=False, help="converts *each* pixel to an ASCII character (not recommended)")
 parser.add_argument('--dark', dest='dark', action='store_true', default=False, help="creates the image with dark background")
 parser.add_argument('file', help="the original file")
 args = parser.parse_args()
@@ -26,6 +26,8 @@ if not args.dark: chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-
 else: chars = " .'`^\",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$"
 converter = (len(chars) - 1) / 255
 
+print("Converting %s to ASCII art..." % args.file)
+
 if not args.foreach:
     for row in range(height):
         for col in range(width):
@@ -35,12 +37,18 @@ if not args.foreach:
                     letter.append(original.getpixel((x, y)))
             out_text += chars[round(mean(letter) * converter)]
         out_text += '\n'
+        print('Progress: {:.0f}%'.format((row * col) / (height * width) * 100), end='\r')
 else:
     for y in range(height):
         for x in range(width):
             out_text += chars[round(original.getpixel((x, y)) * converter)]
         out_text += '\n'
+        print('Progress: {:.0f}%'.format((x * y) / (height * width) * 100), end='\r')
 
+print('                         ', end='\r')
+print('Saving...', end='\r')
 if not args.dark: draw.text((0, 0), out_text, font=font, fill=0, spacing=1)
 else: draw.text((0, 0), out_text, font=font, fill=255, spacing=1)
-new.save(args.file + '-ascii.png')
+new_filename = args.file + '-ascii.png'
+new.save(new_filename)
+print("The converted image can be found at: %s" % new_filename)
