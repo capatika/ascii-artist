@@ -7,25 +7,28 @@ parser.add_argument('file', help="the original file")
 parser.add_argument('--foreach', dest='foreach', action='store_true', default=False, help="converts each pixel to an ASCII character")
 args = parser.parse_args()
 
+horizontal = 6
+vertical = 10
+
 original = Image.open(args.file).convert('L')
 if not args.foreach:
-    width = int(original.size[0] / 6)
-    height = int(original.size[1] / 12)
+    width = int(original.size[0] / horizontal)
+    height = int(original.size[1] / vertical)
 else: width, height = original.size[0], original.size[1]
-new = Image.new('L', (width * 6, height * 12), color=255)
+new = Image.new('L', (width * horizontal, height * vertical), color=255)
 draw = ImageDraw.Draw(new)
 font = ImageFont.truetype('consola.ttf', 11)
 out_text = ''
 
-chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
+chars = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. "
 converter = 69 / 255
 
 if not args.foreach:
     for row in range(height):
         for col in range(width):
             letter = []
-            for y in range(row * 12, row * 12 + 12):
-                for x in range(col * 6, col * 6 + 6):
+            for y in range(row * vertical, row * vertical + vertical):
+                for x in range(col * horizontal, col * horizontal + horizontal):
                     letter.append(original.getpixel((x, y)))
             out_text += chars[round(mean(letter) * converter)]
         out_text += '\n'
@@ -35,5 +38,5 @@ else:
             out_text += chars[round(original.getpixel((x, y)) * converter)]
         out_text += '\n'
 
-draw.text((0, 0), out_text, font=font, fill=0, spacing=3)
+draw.text((0, 0), out_text, font=font, fill=0, spacing=1)
 new.save(args.file + '-ascii.png')
