@@ -1,3 +1,6 @@
 /.git
 /ascii-artist.code-workspace
 /files
+FFMPEGFrames.py
+get_frames.py
+video_info.py
