@@ -55,7 +55,7 @@ def get_audio(original: str):
     output = 'data\\audio\\' + original.split('\\')[-1].split('.')[0]
     if not os.path.exists(output): os.makedirs(output)
     subprocess.call(['ffmpeg', '-i', original, '-codec:a', 'pcm_s16le', '-ac', '1', output + '\\audio.wav'])
-    return output
+    return output + '\\audio.wav'
 
 
 def convert_image(args, convertable: str, progress=0.0):
