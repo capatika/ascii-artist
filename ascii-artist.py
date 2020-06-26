@@ -1,9 +1,9 @@
 from PIL import Image, ImageDraw, ImageFont
 from statistics import mean
-import argparse, ffmpeg, os, subprocess
+import argparse, ffmpeg, os, subprocess, shutil
 
 def get_info(original):
-    print("Getting video information...", end='\r')
+    print("Getting video information...")
 
     if '.mp4' not in original[-4:]:
         print("The file specified is not a video.")
@@ -36,22 +36,23 @@ def get_info(original):
 
 
 def get_frames(original: str, fps: float):
-    print('                                                      ', end='\r')
+    print('                                                      ')
     print('Extracting frames...')
 
     output = 'data\\frames\\' + original.split('\\')[-1].split('.')[0] + '\\'
     if not os.path.exists(output): os.makedirs(output)
 
-    query = "ffmpeg -i " + original + " -vf fps=" + str(fps) + " " + output + "/%06d.png"
+    query = "ffmpeg -i " + original + " -vf fps=" + str(fps) + " " + output + "%06d.png"
     response = subprocess.Popen(query, shell=True, stdout=subprocess.PIPE).stdout.read()
     s = str(response).encode('utf-8')
+    '' + str(s)  # this is just here so that vscode doesn't detect s as 'unused'. it doesn't actually do anything.
 
     return output
 
 
 def get_audio(original: str):
     print('                                                      ', end='\r')
-    print('Extracting audio...', end='\r')
+    print('Extracting audio...')
     output = 'data\\audio\\' + original.split('\\')[-1].split('.')[0]
     if not os.path.exists(output): os.makedirs(output)
     subprocess.call(['ffmpeg', '-i', original, '-codec:a', 'pcm_s16le', '-ac', '1', output + '\\audio.wav'])
@@ -86,7 +87,7 @@ def convert_image(args, convertable: str, progress=0.0):
         print("This feature is currently disabled.")
     print('                                                                                      ', end='\r')
     if args.video: print('Converting frames: Saving... | {:.0f}%'.format(progress), end='\r')
-    else: print('Saving...')
+    else: print('Saving...', end='\r')
     if not args.dark: draw.text((0, 0), out_text, font=font, fill=0, spacing=1)
     else: draw.text((0, 0), out_text, font=font, fill=255, spacing=1)
     if not args.video: new_filename = args.file + '-ascii.png'
@@ -94,12 +95,27 @@ def convert_image(args, convertable: str, progress=0.0):
     new.save(new_filename)
     if not args.video: print("The converted image can be found at: %s" % new_filename)
 
+def construct_video(args, frame_loc: str, audio_loc: str, fps: float):
+    print('                                                                                      ', end='\r')
+    print('Constructing video...')
+    video_loc = 'data\\video\\' + args.file.split('\\')[-1].split('.')[0]
+    if not os.path.exists(video_loc): os.makedirs(video_loc)
+    subprocess.call(['ffmpeg', '-framerate', str(fps), '-i', frame_loc + '%06d.png', '-pix_fmt', 'yuv420p', video_loc + '\\video.mp4'])
+    new_filename = args.file + '-ascii.mp4'
+    subprocess.call(['ffmpeg', '-an', '-i', video_loc + '\\video.mp4', '-vn', '-i', audio_loc, '-c:v', 'copy', new_filename])
+    print('The video can be found at: %s' % new_filename)
+
+
+def clean_up():
+    shutil.rmtree('data')
+
+
 parser = argparse.ArgumentParser(description="Converts an image to ASCII characters.")
-parser.add_argument('--foreach', dest='foreach', action='store_true', default=False, help="converts *each* pixel to an ASCII character (disabled).")
-parser.add_argument('--dark', dest='dark', action='store_true', default=False, help="creates the image with dark background")
-parser.add_argument('--video', dest='video', action='store_true', default=False, help="converts a video instead")
+parser.add_argument('--foreach', dest='foreach', action='store_true', default=False, help="Converts *each* pixel to an ASCII character (disabled).")
+parser.add_argument('--dark', dest='dark', action='store_true', default=False, help="Creates the image with dark background")
+parser.add_argument('--video', dest='video', action='store_true', default=False, help="Converts a video instead. This may take a while.")
 parser.add_argument('file', help="the original file")
-args = parser.parse_args(['--video', 'files\\in.mp4'])
+args = parser.parse_args()
 
 horizontal = 6
 vertical = 10
@@ -115,6 +131,7 @@ if not args.video:
         convert_image(args, args.file)
     except KeyboardInterrupt:
         print('\nCancelled.')
+        clean_up()
         raise SystemExit
 else:
     try:
@@ -123,6 +140,9 @@ else:
         audio_location = get_audio(args.file)
         for frame in range(frame_num):
             convert_image(args, frame_location + '{:06d}'.format(frame + 1) + '.png', frame / frame_num * 100)
+        construct_video(args, frame_location, audio_location, fps)
+        clean_up()
     except KeyboardInterrupt:
-        print('\nCanceled.')
+        print('\nCancelled.')
+        clean_up()
         raise SystemExit
