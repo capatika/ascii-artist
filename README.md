@@ -4,7 +4,7 @@
 This is a little program that can convert an image or an .mp4 video file to ASCII-art. 
 
 ## Requirements
-This program only runs on Windows and requires the ffmpeg program installed and added to PATH.
+This program only runs on Windows and requires the [ffmpeg program](https://ffmpeg.org/) installed and added to PATH. The ffmpeg-python and Pillow packages are also needed.
 
 ## Usage
 This program runs in cmd. For more information, you can use the built-in help option.
